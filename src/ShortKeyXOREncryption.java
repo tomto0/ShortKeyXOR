@@ -4,7 +4,6 @@ public class ShortKeyXOREncryption {
     public static String textToBinary(String text) {
         StringBuilder binary = new StringBuilder();
         for (char c : text.toCharArray()) {
-            // Jeder Buchstabe wird als 8-Bit Binärstring dargestellt
             String binChar = String.format("%8s", Integer.toBinaryString(c)).replace(' ', '0');
             binary.append(binChar);
         }
@@ -14,7 +13,6 @@ public class ShortKeyXOREncryption {
     // Wandelt einen binären String (ASCII 8-bit) wieder zurück in normalen Text
     public static String binaryToText(String binary) {
         StringBuilder text = new StringBuilder();
-        // In 8-Bit Schritte durch den Binärstring iterieren
         for (int i = 0; i < binary.length(); i += 8) {
             String byteStr = binary.substring(i, i + 8);
             int charCode = Integer.parseInt(byteStr, 2); // Binär -> Integer
@@ -26,14 +24,11 @@ public class ShortKeyXOREncryption {
     // Führt die XOR-Verschlüsselung durch: Text XOR Key (beide als Binärstring)
     public static String xorEncrypt(String binaryText, String binaryKey) {
         StringBuilder result = new StringBuilder();
-
         for (int i = 0; i < binaryText.length(); i++) {
-            // Bitweise XOR: '1' XOR '0' = '1', '1' XOR '1' = '0' usw.
             char textBit = binaryText.charAt(i);
             char keyBit = binaryKey.charAt(i % binaryKey.length()); // zyklische Wiederholung des Keys
             result.append(textBit == keyBit ? '0' : '1'); // XOR-Logik
         }
-
         return result.toString();
     }
 
@@ -53,8 +48,6 @@ public class ShortKeyXOREncryption {
                 }
             }
 
-            // Wenn für diesen Shift die meisten Übereinstimmungen gefunden wurden,
-            // ist das wahrscheinlich die richtige Schlüssellänge (oder ein Vielfaches davon)
             if (coincidences > maxCoincidences) {
                 maxCoincidences = coincidences;
                 bestKeyLength = shift;
@@ -67,25 +60,43 @@ public class ShortKeyXOREncryption {
     public static void main(String[] args) {
         // Beispiel-Text zum Verschlüsseln
         String plaintext = "Dies ist ein Testtext für XOR Verschlüsselung!";
+        String plaintext2 = "Dies ist ein Testtext für die Aufgabe 16, wo wir mit XOR Verschlüsselung arbeiten und die Schlüssellänge schätzen.";
+        String plaintext3 = "Test";
 
         // Kurzschlüssel (z. B. aus einem Passwort)
         String key = "key";
 
         // Konvertiere Text und Key zu Binärstring
         String binaryPlaintext = textToBinary(plaintext);
+        String binaryPlaintext2 = textToBinary(plaintext2);
+        String binaryPlaintext3 = textToBinary(plaintext3);
         String binaryKey = textToBinary(key);
 
-        // Verschlüsselung: Text XOR Key
-        String ciphertext = xorEncrypt(binaryPlaintext, binaryKey);
-        System.out.println("Ciphertext (binary): " + ciphertext);
+        // Verschlüsseln
+        String binaryCiphertext = xorEncrypt(binaryPlaintext, binaryKey);
+        String binaryCiphertext2 = xorEncrypt(binaryPlaintext2, binaryKey);
+        String binaryCiphertext3 = xorEncrypt(binaryPlaintext3, binaryKey);
+        System.out.println("Ciphertext (binär): " + binaryCiphertext);
+        System.out.println("Ciphertext2 (binär): " + binaryCiphertext2);
+        System.out.println("Ciphertext3 (binär): " + binaryCiphertext3);
 
-        // Entschlüsselung: Ciphertext erneut mit dem Key XOR-en
-        String decryptedBinary = xorEncrypt(ciphertext, binaryKey);
+        // Entschlüsseln (nochmal XOR mit Key)
+        String decryptedBinary = xorEncrypt(binaryCiphertext, binaryKey);
+        String decryptedBinary2 = xorEncrypt(binaryCiphertext2, binaryKey);
+        String decryptedBinary3 = xorEncrypt(binaryCiphertext3, binaryKey);
         String decryptedText = binaryToText(decryptedBinary);
-        System.out.println("Decrypted Text: " + decryptedText);
+        String decryptedText2 = binaryToText(decryptedBinary2);
+        String decryptedText3 = binaryToText(decryptedBinary3);
+        System.out.println("Entschlüsselter Text: " + decryptedText);
+        System.out.println("Entschlüsselter Text2: " + decryptedText2);
+        System.out.println("Entschlüsselter Text3: " + decryptedText3);
 
-        // Schätz die Schlüssellänge durch Counting Coincidences
-        int estimatedKeyLength = estimateKeyLength(ciphertext, 50);
-        System.out.println("Estimated Key Length: " + estimatedKeyLength);
+        // Schätzung der Schlüssellänge
+        int estimatedKeyLength = estimateKeyLength(binaryCiphertext, 100);
+        int estimatedKeyLength2 = estimateKeyLength(binaryCiphertext2, 100);
+        int estimatedKeyLength3 = estimateKeyLength(binaryCiphertext3, 100);
+        System.out.println("Erwartete Schlüssellänge: " + estimatedKeyLength);
+        System.out.println("Erwartete Schlüssellänge2: " + estimatedKeyLength2);
+        System.out.println("Erwartete Schlüssellänge3: " + estimatedKeyLength3);
     }
 }
