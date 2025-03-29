@@ -1,27 +1,22 @@
 public class ShortKeyXOREncryption {
 
-    // Wandelt normalen Text in einen binären String (ASCII -> 8-bit Binär)
     public static String textToBinary(String text) {
         StringBuilder binary = new StringBuilder();
         for (char c : text.toCharArray()) {
-            String binChar = String.format("%8s", Integer.toBinaryString(c)).replace(' ', '0');
-            binary.append(binChar);
+            binary.append(String.format("%8s", Integer.toBinaryString(c)).replace(' ', '0'));
         }
         return binary.toString();
     }
 
-    // Wandelt einen binären String (ASCII 8-bit) wieder zurück in normalen Text
     public static String binaryToText(String binary) {
         StringBuilder text = new StringBuilder();
-        for (int i = 0; i < binary.length(); i += 8) {
-            String byteStr = binary.substring(i, i + 8);
-            int charCode = Integer.parseInt(byteStr, 2); // Binär -> Integer
-            text.append((char) charCode); // Integer -> ASCII-Zeichen
+        for (int i = 0; i <= binary.length() - 8; i += 8) {
+            int charCode = Integer.parseInt(binary.substring(i, i + 8), 2);
+            text.append((char) charCode);
         }
         return text.toString();
     }
 
-    // Führt die XOR-Verschlüsselung durch: Text XOR Key (beide als Binärstring)
     public static String xorEncrypt(String binaryText, String binaryKey) {
         StringBuilder result = new StringBuilder();
         for (int i = 0; i < binaryText.length(); i++) {
@@ -32,7 +27,6 @@ public class ShortKeyXOREncryption {
         return result.toString();
     }
 
-    // Counting Coincidences Methode zur Schätzung der Schlüssellänge
     public static int estimateKeyLength(String ciphertext, int maxGuess) {
         int bestKeyLength = 1;         // Beste Schätzung der Schlüssellänge
         int maxCoincidences = 0;       // Höchste Anzahl an Übereinstimmungen bei einem Shift
@@ -40,63 +34,78 @@ public class ShortKeyXOREncryption {
         // Versuche verschiedene Shifts (1 bis maxGuess)
         for (int shift = 1; shift <= maxGuess; shift++) {
             int coincidences = 0;
-
-            // Vergleiche jedes Bit mit dem um "shift" versetzten Bit
             for (int i = 0; i < ciphertext.length() - shift; i++) {
                 if (ciphertext.charAt(i) == ciphertext.charAt(i + shift)) {
                     coincidences++; // Zähle Übereinstimmungen
                 }
             }
-
             if (coincidences > maxCoincidences) {
                 maxCoincidences = coincidences;
                 bestKeyLength = shift;
             }
         }
-
         return bestKeyLength;
     }
 
-    public static void main(String[] args) {
-        // Beispiel-Text zum Verschlüsseln
-        String plaintext = "Dies ist ein Testtext für XOR Verschlüsselung!";
-        String plaintext2 = "Dies ist ein Testtext für die Aufgabe 16, wo wir mit XOR Verschlüsselung arbeiten und die Schlüssellänge schätzen.";
-        String plaintext3 = "Test";
+    public static void printKeyInfo(String key) {
+        System.out.print("Schlüssel (dezimal): ");
+        for (char c : key.toCharArray()) {
+            System.out.print((int) c + " ");
+        }
+        System.out.println();
 
-        // Kurzschlüssel (z. B. aus einem Passwort)
-        String key = "key";
+        System.out.print("ASCII (druckbar): ");
+        for (char c : key.toCharArray()) {
+            System.out.print((c >= 32 && c < 127) ? c : '.');
+        }
+        System.out.println();
 
-        // Konvertiere Text und Key zu Binärstring
+        System.out.print("Hexadezimal: ");
+        for (char c : key.toCharArray()) {
+            System.out.printf("%02X ", (int) c);
+        }
+        System.out.println();
+
+        System.out.print("Binär: ");
+        for (char c : key.toCharArray()) {
+            System.out.print(String.format("%8s", Integer.toBinaryString(c)).replace(' ', '0') + " ");
+        }
+        System.out.println("\n");
+    }
+
+    public static void runTest(String plaintext, String key) {
         String binaryPlaintext = textToBinary(plaintext);
-        String binaryPlaintext2 = textToBinary(plaintext2);
-        String binaryPlaintext3 = textToBinary(plaintext3);
         String binaryKey = textToBinary(key);
-
-        // Verschlüsseln
         String binaryCiphertext = xorEncrypt(binaryPlaintext, binaryKey);
-        String binaryCiphertext2 = xorEncrypt(binaryPlaintext2, binaryKey);
-        String binaryCiphertext3 = xorEncrypt(binaryPlaintext3, binaryKey);
-        System.out.println("Ciphertext (binär): " + binaryCiphertext);
-        System.out.println("Ciphertext2 (binär): " + binaryCiphertext2);
-        System.out.println("Ciphertext3 (binär): " + binaryCiphertext3);
+        String decryptedText = binaryToText(xorEncrypt(binaryCiphertext, binaryKey));
+        int estimatedLength = estimateKeyLength(binaryCiphertext, 100);
 
-        // Entschlüsseln (nochmal XOR mit Key)
-        String decryptedBinary = xorEncrypt(binaryCiphertext, binaryKey);
-        String decryptedBinary2 = xorEncrypt(binaryCiphertext2, binaryKey);
-        String decryptedBinary3 = xorEncrypt(binaryCiphertext3, binaryKey);
-        String decryptedText = binaryToText(decryptedBinary);
-        String decryptedText2 = binaryToText(decryptedBinary2);
-        String decryptedText3 = binaryToText(decryptedBinary3);
-        System.out.println("Entschlüsselter Text: " + decryptedText);
-        System.out.println("Entschlüsselter Text2: " + decryptedText2);
-        System.out.println("Entschlüsselter Text3: " + decryptedText3);
+        System.out.println("Klartext:         " + plaintext);
+        System.out.println(" Schlüssel:        " + key + " (Länge: " + key.length() + " Zeichen, " + binaryKey.length() + " Bit)");
+        System.out.println("Ciphertext (bin): " + binaryCiphertext);
+        System.out.println("Entschlüsselt:    " + decryptedText);
+        System.out.println("Geschätzte Schlüssellänge (Bit): " + estimatedLength);
+        System.out.println("Entspricht ca. " + (estimatedLength / 8.0) + " Byte\n");
 
-        // Schätzung der Schlüssellänge
-        int estimatedKeyLength = estimateKeyLength(binaryCiphertext, 100);
-        int estimatedKeyLength2 = estimateKeyLength(binaryCiphertext2, 100);
-        int estimatedKeyLength3 = estimateKeyLength(binaryCiphertext3, 100);
-        System.out.println("Erwartete Schlüssellänge: " + estimatedKeyLength);
-        System.out.println("Erwartete Schlüssellänge2: " + estimatedKeyLength2);
-        System.out.println("Erwartete Schlüssellänge3: " + estimatedKeyLength3);
+        // Gib Schlüsseldetails aus
+        printKeyInfo(key);
+    }
+
+    public static void main(String[] args) {
+        // 🔹 Testfall 1: kurzer Key
+        String text1 = "Das ist ein einfacher Text.";
+        String key1 = "a"; // 1 Zeichen
+
+        // 🔹 Testfall 2: mittellanger Key
+        String text2 = "Ein weiterer Text mit etwas mehr Inhalt zur Analyse.";
+        String key2 = "abc"; // 3 Zeichen
+
+        // 🔹 Testfall 3: längerer Key
+        String text3 = "Dieser Text dient dazu, die Erkennung eines längeren XOR-Keys zu testen.";
+        String key3 = "vertraulich"; // 11 Zeichen
+
+        runTest(text1, key1);
+        runTest(text2, key2);
+        runTest(text3, key3);
     }
 }
