@@ -47,6 +47,46 @@ public class ShortKeyXOREncryption {
         return bestKeyLength;
     }
 
+    public static double averageHammingDistance(String ciphertext, int keyLength, int maxBlocks) {
+        int blockCount = Math.min(maxBlocks, ciphertext.length() / keyLength);
+        if (blockCount < 2) return Double.MAX_VALUE;
+        String[] blocks = new String[blockCount];
+        for (int i = 0; i < blockCount; i++) {
+            blocks[i] = ciphertext.substring(i * keyLength, (i + 1) * keyLength);
+        }
+
+        double totalDist = 0;
+        int comparisons = 0;
+        for (int i = 0; i < blockCount; i++) {
+            for (int j = i + 1; j < blockCount; j++) {
+                totalDist += hammingDistance(blocks[i], blocks[j]);
+                comparisons++;
+            }
+        }
+        return (comparisons > 0) ? totalDist / (comparisons * keyLength) : Double.MAX_VALUE;
+    }
+
+    public static int estimateKeyLengthByHamming(String ciphertext, int maxGuess) {
+        double minAvgDist = Double.MAX_VALUE;
+        int bestKeyLength = 1;
+        for (int k = 8; k <= maxGuess; k += 8) {
+            double avgDist = averageHammingDistance(ciphertext, k, 20);
+            if (avgDist < minAvgDist) {
+                minAvgDist = avgDist;
+                bestKeyLength = k;
+            }
+        }
+        return bestKeyLength;
+    }
+
+    public static int hammingDistance(String s1, String s2) {
+        int dist = 0;
+        for (int i = 0; i < Math.min(s1.length(), s2.length()); i++) {
+            if (s1.charAt(i) != s2.charAt(i)) dist++;
+        }
+        return dist;
+    }
+
     public static void printKeyInfo(String key) {
         System.out.print("Schlüssel (dezimal): ");
         for (char c : key.toCharArray()) {
@@ -78,34 +118,25 @@ public class ShortKeyXOREncryption {
         String binaryKey = textToBinary(key);
         String binaryCiphertext = xorEncrypt(binaryPlaintext, binaryKey);
         String decryptedText = binaryToText(xorEncrypt(binaryCiphertext, binaryKey));
-        int estimatedLength = estimateKeyLength(binaryCiphertext, 100);
+
+        int estimatedLengthCoincidences = estimateKeyLength(binaryCiphertext, 100);
+        int estimatedLengthHamming = estimateKeyLengthByHamming(binaryCiphertext, 40);
 
         System.out.println("Klartext:         " + plaintext);
         System.out.println(" Schlüssel:        " + key + " (Länge: " + key.length() + " Zeichen, " + binaryKey.length() + " Bit)");
         System.out.println("Ciphertext (bin): " + binaryCiphertext);
         System.out.println("Entschlüsselt:    " + decryptedText);
-        System.out.println("Geschätzte Schlüssellänge (Bit): " + estimatedLength);
-        System.out.println("Entspricht ca. " + (estimatedLength / 8.0) + " Byte\n");
 
-        // Gib Schlüsseldetails aus
+        System.out.println("Schätzungen der Schlüssellänge:");
+        System.out.println("  ➤ Coincidences-Methode: " + estimatedLengthCoincidences + " Bit");
+        System.out.println("  ➤ Hamming-Distanz-Methode: " + estimatedLengthHamming + " Bit\n");
+
         printKeyInfo(key);
     }
 
     public static void main(String[] args) {
-        // 🔹 Testfall 1: kurzer Key
-        String text1 = "Das ist ein einfacher Text.";
-        String key1 = "a"; // 1 Zeichen
-
-        // 🔹 Testfall 2: mittellanger Key
-        String text2 = "Ein weiterer Text mit etwas mehr Inhalt zur Analyse.";
-        String key2 = "abc"; // 3 Zeichen
-
-        // 🔹 Testfall 3: längerer Key
-        String text3 = "Dieser Text dient dazu, die Erkennung eines längeren XOR-Keys zu testen.";
-        String key3 = "vertraulich"; // 11 Zeichen
-
-        runTest(text1, key1);
-        runTest(text2, key2);
-        runTest(text3, key3);
+        runTest("Das ist ein einfacher Text.", "a");
+        runTest("Ein weiterer Text mit etwas mehr Inhalt zur Analyse.", "abc");
+        runTest("Dieser Text dient dazu, die Erkennung eines längeren XOR-Keys zu testen.", "vertraulich");
     }
 }
