@@ -47,9 +47,15 @@ public class ShortKeyXOREncryption {
         return bestKeyLength;
     }
 
+    // Berechnet den durchschnittlichen Hamming-Abstand zwischen Blöcken einer bestimmten Länge im Ciphertext
     public static double averageHammingDistance(String ciphertext, int keyLength, int maxBlocks) {
+        // Bestimme die tatsächliche Anzahl der Blöcke, begrenzt durch maxBlocks
         int blockCount = Math.min(maxBlocks, ciphertext.length() / keyLength);
+
+        // Wenn zu wenige Blöcke vorhanden sind, Rückgabe eines großen Werts
         if (blockCount < 2) return Double.MAX_VALUE;
+
+        // Zerlege den Ciphertext in gleich große Blöcke
         String[] blocks = new String[blockCount];
         for (int i = 0; i < blockCount; i++) {
             blocks[i] = ciphertext.substring(i * keyLength, (i + 1) * keyLength);
@@ -57,20 +63,29 @@ public class ShortKeyXOREncryption {
 
         double totalDist = 0;
         int comparisons = 0;
+
+        // Vergleiche jeden Block mit allen späteren Blöcken
         for (int i = 0; i < blockCount; i++) {
             for (int j = i + 1; j < blockCount; j++) {
                 totalDist += hammingDistance(blocks[i], blocks[j]);
                 comparisons++;
             }
         }
+
+        // Durchschnittlichen Hamming-Abstand pro Zeichen berechnen
         return (comparisons > 0) ? totalDist / (comparisons * keyLength) : Double.MAX_VALUE;
     }
 
+    // Schätzt die wahrscheinlichste Schlüssellänge anhand des minimalen durchschnittlichen Hamming-Abstands
     public static int estimateKeyLengthByHamming(String ciphertext, int maxGuess) {
         double minAvgDist = Double.MAX_VALUE;
         int bestKeyLength = 1;
+
+        // Probiere mögliche Schlüsselgrößen aus (Vielfache von 8 bis maxGuess)
         for (int k = 8; k <= maxGuess; k += 8) {
             double avgDist = averageHammingDistance(ciphertext, k, 20);
+
+            // Wähle die Schlüssellänge mit dem kleinsten durchschnittlichen Abstand
             if (avgDist < minAvgDist) {
                 minAvgDist = avgDist;
                 bestKeyLength = k;
@@ -78,6 +93,7 @@ public class ShortKeyXOREncryption {
         }
         return bestKeyLength;
     }
+
 
     public static int hammingDistance(String s1, String s2) {
         int dist = 0;
